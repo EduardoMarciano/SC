@@ -1,5 +1,7 @@
 import math
 import random
+import pandas as pd
+from digrafos import frequencia_digrafos
 
 def alphabet_mapping():
     alphabet_map = {}
@@ -71,8 +73,6 @@ def decrypt_transposition(alphabet_map, cypher_text, key):
         for row in range(num_rows):
             matrix[row][index] = cypher_text[col]
             col += 1
-        for row in matrix:
-            print(row)
 
     plain_text = ''
     for row in matrix:
@@ -93,6 +93,15 @@ print(f"Chave de encriptação gerada: {key}")
 
 cypher_text = encrypt_transposition(alphabet_map, plain_text, key)
 print(f"Texto cifrado gerado: {cypher_text}")
+
+#Preparando os dados para o Pandas
+tamanho_grupo = 26
+data= [frequencia_digrafos[i:i + tamanho_grupo] for i in range(0, len(frequencia_digrafos), tamanho_grupo)]
+#Criando um DataFrame com Pandas
+df = pd.DataFrame(data)
+# Ajusta o índice e colunas conforme necessário
+df.index = [chr(i) for i in range(ord('a'), ord('z') + 1)]
+df.columns = [chr(i) for i in range(ord('a'), ord('z') + 1)]
 
 decrypted_text_with_key = decrypt_transposition(alphabet_map, cypher_text, key)
 print(f"Texto resultante da desencriptação com a chave: {decrypted_text_with_key}")
