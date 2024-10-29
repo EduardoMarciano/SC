@@ -1,5 +1,7 @@
 import math
 import random
+import itertools
+import numpy as np
 import pandas as pd
 from digrafos import frequencia_digrafos
 
@@ -80,19 +82,63 @@ def decrypt_transposition(alphabet_map, cypher_text, key):
         
     return plain_text
 
-def break_transposition_cipher(alphabet_map, cypher_text):
-    pass
+def calculate_score(df, column_sequence, cypher_text, key_length):
+    num_rows = len(cypher_text) // key_length
+    if len(cypher_text) % key_length != 0:
+        num_rows += 1
+    
+    matrix = [[''] * key_length for _ in range(num_rows)]
+    col = 0
+    for i in range(len(column_sequence)):
+        index = column_sequence[i]
+        for row in range(num_rows):
+            if col < len(cypher_text):
+                matrix[row][index] = cypher_text[col]
+                col += 1
+
+    # Calcula o score baseado na frequência dos dígrafos
+    score = 0
+    for row in matrix:
+        for i in range(len(row) - 1):
+            if row[i] and row[i + 1]:
+                digraph = row[i] + row[i + 1]
+                if digraph[0] in df.index and digraph[1] in df.columns:
+                    score += df.at[digraph[0], digraph[1]]
+    
+    return score
+
+import itertools
+
+def break_transposition_cipher(df, alphabet_map, cypher_text):
+    key_length = 4
+    best_sequence = None
+    best_score = -1
+    
+    # Gerar todas as combinações possíveis de colunas
+    for perm in itertools.permutations(range(key_length)):
+        score = calculate_score(df, perm, cypher_text, key_length)
+        
+        if score > best_score:
+            best_score = score
+            best_sequence = perm
+    
+    # Decifrar o texto com a melhor sequência encontrada
+    plain_text = decrypt_transposition(alphabet_map, cypher_text, best_sequence)
+    return plain_text
 
 alphabet_map = alphabet_mapping()
 
-plain_text = "querocomerarrozbranconomeujantarnasegundafeirasantadepois"
+plain_text = "aexploracaodemartecomecoucomasprimeirasmissoesnasdecadaspassadascomosondasmarinerosondaespectrometrogasasdeaguaparaentenderocomopodemoscampanharasatividadesnaexploracaoumadasmissõesfuturasincluemroverparacolonizacaoencontrarprovasdevidaexistenaarquiteturasustentavelnasuperficieasdescobertasemrevolucionaramoconhecimentoalienigenaesistemadevigilanciaespacialavancadaestamoscadavezmaisproximosdenovasdescobertasqueseramfundamentaisparanossacompreensaoesperoquesimulationsdevidaextraterrestreajudemanoceanodeconhecimentoemexploracaomarteenossoplaneta"
 print(f"Texto original: {plain_text}")
 
-key = generate_key(alphabet_map)
+key = generate_key(alphabet_map, 4)
 print(f"Chave de encriptação gerada: {key}")
 
 cypher_text = encrypt_transposition(alphabet_map, plain_text, key)
 print(f"Texto cifrado gerado: {cypher_text}")
+
+decrypted_text_with_key = decrypt_transposition(alphabet_map, cypher_text, key)
+print(f"Texto resultante da desencriptação com a chave: {decrypted_text_with_key}")
 
 #Preparando os dados para o Pandas
 tamanho_grupo = 26
@@ -103,8 +149,5 @@ df = pd.DataFrame(data)
 df.index = [chr(i) for i in range(ord('a'), ord('z') + 1)]
 df.columns = [chr(i) for i in range(ord('a'), ord('z') + 1)]
 
-decrypted_text_with_key = decrypt_transposition(alphabet_map, cypher_text, key)
-print(f"Texto resultante da desencriptação com a chave: {decrypted_text_with_key}")
-
-decrypted_text_without_key = break_transposition_cipher(alphabet_map, cypher_text)
+decrypted_text_without_key = break_transposition_cipher(df, alphabet_map, cypher_text)
 print(f"Texto originado da desencriptação sem a chave: {decrypted_text_without_key}")
