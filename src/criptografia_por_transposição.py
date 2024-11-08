@@ -3,7 +3,9 @@ import random
 import itertools
 import numpy as np
 import pandas as pd
-from digrafos import frequencia_digrafos
+import unicodedata
+
+from data.digrafos import frequencia_digrafos
 
 def alphabet_mapping():
     alphabet_map = {}
@@ -24,6 +26,29 @@ def generate_key(alphabet_map, characters_length = 10):
         key.append(shuffled_map[i][0])
 
     return key
+
+def read_plain_text(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        plain_text = file.read()
+    
+    plain_text = plain_text.replace(" ", "")
+    
+    plain_text = unicodedata.normalize('NFD', plain_text)
+    plain_text = ''.join(char for char in plain_text if unicodedata.category(char) != 'Mn')
+    
+    plain_text = plain_text.lower().replace("ç", "")
+    plain_text = plain_text.replace(".", "")
+    plain_text = plain_text.replace(",", "")
+    plain_text = plain_text.replace("-", "")
+    plain_text = plain_text.replace(":", "")
+    plain_text = plain_text.replace(";", "")
+    plain_text = plain_text.replace(")", "")
+    plain_text = plain_text.replace("(", "")
+    plain_text = plain_text.replace("{", "")
+    plain_text = plain_text.replace("}", "")
+    plain_text = plain_text.replace("\n", "")
+    
+    return plain_text
 
 def encrypt_transposition(alphabet_map, plain_text, key):
     key_length = len(key)
@@ -107,10 +132,8 @@ def calculate_score(df, column_sequence, cypher_text, key_length):
     
     return score
 
-import itertools
-
 def break_transposition_cipher(df, alphabet_map, cypher_text):
-    key_length = 4
+    key_length = 6
     best_sequence = None
     best_score = -1
     
@@ -128,10 +151,10 @@ def break_transposition_cipher(df, alphabet_map, cypher_text):
 
 alphabet_map = alphabet_mapping()
 
-plain_text = "aexploracaodemartecomecoucomasprimeirasmissoesnasdecadaspassadascomosondasmarinerosondaespectrometrogasasdeaguaparaentenderocomopodemoscampanharasatividadesnaexploracaoumadasmissõesfuturasincluemroverparacolonizacaoencontrarprovasdevidaexistenaarquiteturasustentavelnasuperficieasdescobertasemrevolucionaramoconhecimentoalienigenaesistemadevigilanciaespacialavancadaestamoscadavezmaisproximosdenovasdescobertasqueseramfundamentaisparanossacompreensaoesperoquesimulationsdevidaextraterrestreajudemanoceanodeconhecimentoemexploracaomarteenossoplaneta"
+plain_text = plain_text = read_plain_text("../src/data/revo_bichos.txt")
 print(f"Texto original: {plain_text}")
 
-key = generate_key(alphabet_map, 4)
+key = ['a', 'h', 'j', 'v', 't', 'n']
 print(f"Chave de encriptação gerada: {key}")
 
 cypher_text = encrypt_transposition(alphabet_map, plain_text, key)
